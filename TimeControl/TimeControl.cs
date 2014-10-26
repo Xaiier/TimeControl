@@ -24,6 +24,7 @@ namespace TimeControl
         ScreenMessages warpText;
         Color warpTextColor;
         private IButton toolbarButton;
+        private ApplicationLauncherButton stockButton;
         private static FlightCamera cam;
         private static TimeWarp timeWarp;
         private Boolean supressFlightResultsDialog = false;
@@ -79,27 +80,24 @@ namespace TimeControl
         private double warpTime = Mathf.NegativeInfinity;
 
         //INIT FUNCTIONS
-        internal TimeControl()
+        private void Awake()
         {
             if (ToolbarManager.ToolbarAvailable)
             {
                 toolbarButton = ToolbarManager.Instance.add("TimeControl", "button");
-                toolbarButton.TexturePath = "TimeControl/inactive";
+                toolbarButton.TexturePath = "TimeControl/icons/inactive";
                 toolbarButton.ToolTip = "Time Control";
-                toolbarButton.Visibility = new GameScenesVisibility(GameScenes.FLIGHT, GameScenes.TRACKSTATION, GameScenes.SPACECENTER); //Places where the button should show up
+                toolbarButton.Visibility = new GameScenesVisibility(GameScenes.FLIGHT, GameScenes.TRACKSTATION, GameScenes.SPACECENTER);
                 toolbarButton.OnClick += (e) =>
                 {
-                    Settings.visible = !Settings.visible;
-                    toolbarButton.TexturePath = Settings.visible ? "TimeControl/active" : "TimeControl/inactive";
+                    toggleVisibility();
                 };
             }
             else
             {
                 Settings.visible = true;
             }
-        }//TODO AppToolbar implementation (waiting until it will work in the TS)
-        private void Awake()
-        {
+
             UnityEngine.Object.DontDestroyOnLoad(this); //Don't go away on scene changes
 
             //Check for updates
@@ -132,6 +130,61 @@ namespace TimeControl
             GameEvents.onPartDestroyed.Add(this.onPartDestroyed);
             GameEvents.onVesselDestroy.Add(this.onVesselDestroy);
             GameEvents.onVesselGoOffRails.Add(this.onVesselGoOffRails);
+
+            //APPLICATION LAUNCHER
+            GameEvents.onGUIApplicationLauncherReady.Add(this.onGUIApplicationLauncherReady);
+            GameEvents.onGUIApplicationLauncherDestroyed.Add(this.onGUIApplicationLauncherDestroyed);
+        }
+
+        //APPLICATION LAUNCHER
+        private void onGUIApplicationLauncherReady()
+        {
+            if (stockButton == null)
+            {
+                stockButton = ApplicationLauncher.Instance.AddModApplication(
+                                                               onAppToolbarTrue,
+                                                               onAppToolbarFalse,
+                                                               onAppToolbarHover,
+                                                               onAppToolbarHoverOut,
+                                                               onAppToolbarEnable,
+                                                               onAppToolbarDisable,
+                                                               ApplicationLauncher.AppScenes.FLIGHT |
+                                                               ApplicationLauncher.AppScenes.MAPVIEW |
+                                                               ApplicationLauncher.AppScenes.SPACECENTER |
+                                                               ApplicationLauncher.AppScenes.TRACKSTATION,
+                                                               (Texture)GameDatabase.Instance.GetTexture("TimeControl/icons/active_stock", false));
+            }
+            
+        }
+        private void onGUIApplicationLauncherDestroyed()
+        {
+
+        }
+        private void onAppToolbarTrue()
+        {
+            Settings.visible = false;
+            toggleVisibility();
+        }
+        private void onAppToolbarFalse()
+        {
+            Settings.visible = true;
+            toggleVisibility();
+        }
+        private void onAppToolbarHover()
+        {
+
+        }
+        private void onAppToolbarHoverOut()
+        {
+
+        }
+        private void onAppToolbarEnable()
+        {
+
+        }
+        private void onAppToolbarDisable()
+        {
+
         }
 
         //EVENT MANAGERS
@@ -175,7 +228,15 @@ namespace TimeControl
 
             if (ToolbarManager.ToolbarAvailable)
             {
-                toolbarButton.TexturePath = Settings.visible ? "TimeControl/active" : "TimeControl/inactive";
+                toolbarButton.TexturePath = Settings.visible ? "TimeControl/icons/active" : "TimeControl/icons/inactive";
+            }
+            if (Settings.visible)
+            {
+                stockButton.SetTrue(false);
+            }
+            else
+            {
+                stockButton.SetFalse(false);
             }
         }
         private void onPartDestroyed(Part p)
@@ -223,48 +284,10 @@ namespace TimeControl
             }
         }
 
-
         //UPDATE FUNCTIONS
         private void Update()
         {
-            preUpdate();
-
-            if (timeWarp != null)
-            {
-                if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
-                {
-                    flightUpdate();
-                }
-            }
-            else if (HighLogic.LoadedScene != GameScenes.MAINMENU)
-            {
-                timeWarp = TimeWarp.fetch;
-            }
-            if (timeWarp == null)
-                return;
-
-            setWarpLevels(Settings.warpLevels);
-
-            for (int i = 0; i < Settings.warpLevels; i++)
-            {
-                timeWarp.warpRates[i] = parseSTOI(Settings.customWarpRates[i]);
-                for (int j = 0; j < PSystemManager.Instance.localBodies.Count; j++)
-                {
-                    PSystemManager.Instance.localBodies[j].timeWarpAltitudeLimits[i] = parseSTOI(Settings.customAltitudeLimits[j][i]);
-                }
-            }
-
-            if (timeWarp.current_rate_index >= Settings.warpLevels && timeWarp.Mode == TimeWarp.Modes.HIGH)
-            {
-                TimeWarp.SetRate(Settings.warpLevels - 1, false);
-            }
-
-            if ((Planetarium.GetUniversalTime() > warpTime || Mathf.Abs((float)Planetarium.GetUniversalTime() - (float)warpTime) < 60) && autoWarping)
-            {
-                autoWarping = false;
-            }
-        }
-            private void preUpdate()
+            if (HighLogic.LoadedSceneIsFlight || HighLogic.LoadedScene == GameScenes.TRACKSTATION || HighLogic.LoadedScene == GameScenes.SPACECENTER)
             {
                 if (selectedSOI == -1)
                 {
@@ -277,18 +300,17 @@ namespace TimeControl
 
                 if ((Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)) && Input.GetKeyDown(KeyCode.T))
                 {
-                    Settings.visible = !Settings.visible;
-                    toolbarButton.TexturePath = Settings.visible ? "TimeControl/active" : "TimeControl/inactive";
-                    if (HighLogic.LoadedScene == GameScenes.FLIGHT && GameSettings.SAS_TOGGLE.primary == KeyCode.T)
+                    toggleVisibility();
+                    if (HighLogic.LoadedSceneIsFlight && GameSettings.SAS_TOGGLE.primary == KeyCode.T)
                     {
                         FlightGlobals.ActiveVessel.ActionGroups.ToggleGroup(KSPActionGroup.SAS);
                     }
                 }
 
-                //if ((Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)) && Input.GetKey(KeyCode.T))
-                //{
-                //    showDebugGUI = true;
-                //}
+                if ((Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)) && Input.GetKey(KeyCode.T))
+                {
+                    showDebugGUI = true;
+                }
 
                 sizeWindows();
 
@@ -332,7 +354,43 @@ namespace TimeControl
                         currentSOI = getPlanetaryID(PlanetariumCamera.fetch.target.vessel.mainBody.name);
                     }
                 }
+
+                if (timeWarp != null)
+                {
+                    if (HighLogic.LoadedSceneIsFlight && FlightGlobals.ready)
+                    {
+                        flightUpdate();
+                    }
+                }
+                else if (HighLogic.LoadedScene != GameScenes.MAINMENU)
+                {
+                    timeWarp = TimeWarp.fetch;
+                }
+                if (timeWarp == null)
+                    return;
+
+                setWarpLevels(Settings.warpLevels);
+
+                for (int i = 0; i < Settings.warpLevels; i++)
+                {
+                    timeWarp.warpRates[i] = parseSTOI(Settings.customWarpRates[i]);
+                    for (int j = 0; j < PSystemManager.Instance.localBodies.Count; j++)
+                    {
+                        PSystemManager.Instance.localBodies[j].timeWarpAltitudeLimits[i] = parseSTOI(Settings.customAltitudeLimits[j][i]);
+                    }
+                }
+
+                if (timeWarp.current_rate_index >= Settings.warpLevels && timeWarp.Mode == TimeWarp.Modes.HIGH)
+                {
+                    TimeWarp.SetRate(Settings.warpLevels - 1, false);
+                }
+
+                if ((Planetarium.GetUniversalTime() > warpTime || Mathf.Abs((float)Planetarium.GetUniversalTime() - (float)warpTime) < 60) && autoWarping)
+                {
+                    autoWarping = false;
+                }
             }
+        }
         private void FixedUpdate()
         {
             if (Planetarium.GetUniversalTime() >= hyperWarpTime)
@@ -422,7 +480,7 @@ namespace TimeControl
                     Time.timeScale = Mathf.Round(hyperMaxRate);
                     Time.fixedDeltaTime = defaultDeltaTime * hyperMinPhys;
                     warpText.textStyles[1].normal.textColor = Color.red;
-                    warpMessage("Hyper Warp: " + Math.Round(PerformanceManager.ptr, 1) + "x");
+                    warpMessage("Hyper Warp: " + Math.Round(PerformanceMonitor.ptr, 1) + "x");
                 }
                 Planetarium.fetch.fixedDeltaTime = Time.fixedDeltaTime;
             }
@@ -440,7 +498,7 @@ namespace TimeControl
             {
                 Settings.fpsPosition.x = parseSTOI(Settings.fpsX);
                 Settings.fpsPosition.y = parseSTOI(Settings.fpsY);
-                GUI.Label(Settings.fpsPosition, Mathf.Floor(PerformanceManager.fps).ToString());
+                GUI.Label(Settings.fpsPosition, Mathf.Floor(PerformanceMonitor.fps).ToString());
             }
 
             GUI.skin = null;
@@ -629,7 +687,7 @@ namespace TimeControl
                 {
                     GUILayout.BeginHorizontal();
                     {
-                        GUILayout.Label("Time Rate: " + (PerformanceManager.ptr / 1 * 100).ToString("0") + "%");
+                        GUILayout.Label("Time Rate: " + (PerformanceMonitor.ptr / 1 * 100).ToString("0") + "%");
                         GUILayout.FlexibleSpace();
                         if (hyperWarping)
                         {
@@ -972,7 +1030,7 @@ namespace TimeControl
 
             GUILayout.BeginVertical();
             {
-                GUILayout.Label("Physics Time Ratio: " + PerformanceManager.ptr.ToString("0.0000"));
+                GUILayout.Label("Physics Time Ratio: " + PerformanceMonitor.ptr.ToString("0.0000"));
                 GUILayout.Label("UT: " + Planetarium.GetUniversalTime());
                 GUILayout.Label("Time Scale: " + Time.timeScale);
                 GUILayout.Label("Physics Delta: " + Time.fixedDeltaTime);
@@ -983,14 +1041,14 @@ namespace TimeControl
 
                 GUILayout.BeginHorizontal();
                 {
-                    GUILayout.Label("FPS: " + Mathf.Floor(PerformanceManager.fps), GUILayout.Width(50));
+                    GUILayout.Label("FPS: " + Mathf.Floor(PerformanceMonitor.fps), GUILayout.Width(50));
                     Settings.showFPS = GUILayout.Toggle(Settings.showFPS, "Show");
                     Settings.fpsX = GUILayout.TextField(Settings.fpsX, 5, GUILayout.Width(30));
                     Settings.fpsY = GUILayout.TextField(Settings.fpsY, 5, GUILayout.Width(30));
                 }
                 GUILayout.EndHorizontal();
 
-                GUILayout.Label("PPS: " + PerformanceManager.pps);
+                GUILayout.Label("PPS: " + PerformanceMonitor.pps);
                 Settings.camFix = GUILayout.Toggle(Settings.camFix, "Camera Zoom Fix");
                 supressFlightResultsDialog = GUILayout.Toggle(supressFlightResultsDialog, "Supress Results Dialog");
 
@@ -1096,7 +1154,7 @@ namespace TimeControl
                 GUILayout.Label("Online Version: " + updateNumber);
                 GUILayout.Label("Update Available: " + updateAvailable);
                 GUILayout.Label("Minimized: " + Settings.minimized);
-                GUILayout.Label("Visible (toolbar): " + Settings.visible);
+                GUILayout.Label("Visible: " + Settings.visible);
                 GUILayout.Label("Temp Invisible: " + tempInvisible);
                 GUILayout.Label("Operational: " + operational);
                 GUILayout.Label("TimeWarp: " + timeWarp);
@@ -1171,6 +1229,23 @@ namespace TimeControl
         }
 
         //HELPER FUNCTIONS
+        private void toggleVisibility()
+        {
+            Settings.visible = !Settings.visible;
+
+            if (ToolbarManager.ToolbarAvailable)
+            {
+                toolbarButton.TexturePath = Settings.visible ? "TimeControl/icons/active" : "TimeControl/icons/inactive";
+            }
+            if (Settings.visible)
+            {
+                stockButton.SetTrue(false);
+            }
+            else
+            {
+                stockButton.SetFalse(false);
+            }
+        }
         private Boolean mouseOverWindow(Rect r, Boolean visible)
         {
             return visible && r.Contains(Event.current.mousePosition);
@@ -1194,9 +1269,9 @@ namespace TimeControl
             fpsMin = (int)Mathf.Round(Settings.fpsMinSlider / 5) * 5;
             if (Settings.fpsKeeperActive)
             {
-                if (Mathf.Abs(PerformanceManager.fps - fpsMin) > 2.5)
+                if (Mathf.Abs(PerformanceMonitor.fps - fpsMin) > 2.5)
                 {
-                    if (PerformanceManager.fps < fpsMin)
+                    if (PerformanceMonitor.fps < fpsMin)
                     {
                         fpsKeeperFactor += 1;
                     }

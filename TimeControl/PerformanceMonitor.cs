@@ -17,7 +17,7 @@ using KSP.IO;
 namespace TimeControl
 {
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
-    public class PerformanceManager : MonoBehaviour
+    public class PerformanceMonitor : MonoBehaviour
     {
         //Public accessible
         public static float fps; //frames per second
