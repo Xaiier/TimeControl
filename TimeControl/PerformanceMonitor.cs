@@ -7,12 +7,9 @@
 //TODO make this a standalone and include FPS display in it
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
 using UnityEngine;
-using KSP.IO;
 
 namespace TimeControl
 {
