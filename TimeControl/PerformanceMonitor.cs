@@ -17,9 +17,33 @@ namespace TimeControl
     public class PerformanceMonitor : MonoBehaviour
     {
         //Public accessible
-        public static float fps; //frames per second
-        public static float pps; //physics updates per second
-        public static double ptr = 0f; //physics time ratio
+        private static float fps; //frames per second
+        private static float pps; //physics updates per second
+        private static double ptr = 0f; //physics time ratio
+
+        public static float getfps
+        {
+            get
+            {
+                return fps;
+            }
+        }
+
+        public static float getpps
+        {
+            get
+            {
+                return pps;
+            }
+        }
+
+        public static double getptr
+        {
+            get
+            {
+                return ptr;
+            }
+        }
 
         //Settings
         private float updateInterval = 0.5f; //half a second

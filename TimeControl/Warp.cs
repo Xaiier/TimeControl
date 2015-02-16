@@ -8,8 +8,20 @@ namespace TimeControl
     [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
     class Warp : MonoBehaviour
     {
+        private static Warp singleton;
+
+        public static Warp fetch
+        {
+            get
+            {
+                return singleton;
+            }
+        }
+
         private void Awake()
         {
+            singleton = this;
+
             print("Warp class initialized");
         }
     }
