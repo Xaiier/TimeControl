@@ -141,6 +141,33 @@ namespace TimeControl
 
         }
 
+        private void sizeWindows()
+        {
+            menuWindowPosition.height = 0;
+            menuWindowPosition.width = 375;
+
+            settingsWindowPosition.height = 0;
+            settingsWindowPosition.width = 220;
+
+            switch (mode)
+            {
+                case 0:
+                    flightWindowPosition.height = 0;
+                    flightWindowPosition.width = 220;
+                    break;
+                case 1:
+                    flightWindowPosition.height = 0;
+                    flightWindowPosition.width = 250;
+                    break;
+                case 2:
+                    flightWindowPosition.height = 0;
+                    flightWindowPosition.width = 375;
+                    break;
+            }
+
+            settingsButton.x = flightWindowPosition.xMax - flightWindowPosition.xMin - 20; //Move the ?
+        }
+
         //HELPER FUNCTIONS
         private Rect constrainToScreen(Rect r)
         {
