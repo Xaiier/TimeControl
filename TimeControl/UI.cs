@@ -51,12 +51,12 @@ namespace TimeControl
             {
                 if (HighLogic.LoadedScene == GameScenes.TRACKSTATION || HighLogic.LoadedScene == GameScenes.SPACECENTER)
                 {
-                    menuWindowPosition = constrainToScreen(GUILayout.Window("Time Control".GetHashCode(), menuWindowPosition, onAllGUI, "Time Control"));
+                    menuWindowPosition = constrainToScreen(GUILayout.Window("Time Control".GetHashCode(), menuWindowPosition, onUtilGUI, "Time Control"));
                 }
 
                 if (HighLogic.LoadedSceneIsFlight)
                 {
-                    flightWindowPosition = constrainToScreen(GUILayout.Window("Time Control".GetHashCode() + 1, flightWindowPosition, onAllGUI, "Time Control"));
+                    flightWindowPosition = constrainToScreen(GUILayout.Window("Time Control".GetHashCode() + 1, flightWindowPosition, onUtilGUI, "Time Control"));
 
                     if (settingsOpen)
                     {
@@ -68,12 +68,12 @@ namespace TimeControl
             GUI.skin = HighLogic.Skin;//use KSP skin - prevents bugs with other mods that might not bother to set skin
         }
 
-        private void onAllGUI(int windowId)
+        private void onUtilGUI(int windowId)
         {
             //Minimize button
             if (GUI.Button(closeButton, ""))
             {
-                //hide the GUI
+                visible = !visible; //ALSO TOOLBAR SUPPORT STUFF
             }
 
             Color bc = GUI.backgroundColor;
@@ -132,19 +132,13 @@ namespace TimeControl
             GUI.DragWindow();
         }
 
-        private void onWarpGUI()
-        {
-
-        }
-
-        private void onFlightGUI()
-        {
-
-        }
-
         private void onSettingsGUI(int windowID)
         {
-
+            //Close button
+            if (GUI.Button(closeButton, ""))
+            {
+                settingsOpen = !settingsOpen;
+            }
         }
 
         private void sizeWindows()
