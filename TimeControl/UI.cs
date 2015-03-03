@@ -16,11 +16,22 @@ namespace TimeControl
         private Rect flightWindowPosition;
         private Rect settingsWindowPosition;
 
+        private static Rect closeButton = new Rect(5, 5, 10, 10);
+        private static Rect settingsButton = new Rect(182, -1, 20, 20);
+        private static Rect mode0Button = new Rect(10, -1, 25, 20);
+        private static Rect mode1Button = new Rect(25, -1, 25, 20);
+        private static Rect mode2Button = new Rect(40, -1, 25, 20);
+
         private void Awake()
         {
             UnityEngine.Object.DontDestroyOnLoad(this);
 
             print("UI class initialized");
+        }
+
+        private void Update()
+        {
+            sizeWindows();
         }
 
         private void OnGUI()
@@ -57,11 +68,6 @@ namespace TimeControl
             GUI.skin = HighLogic.Skin;//use KSP skin - prevents bugs with other mods that might not bother to set skin
         }
 
-        private static Rect closeButton = new Rect(5, 5, 10, 10);
-        private static Rect settingsButton = new Rect(182, -1, 20, 20);
-        private static Rect mode0Button = new Rect(10, -1, 25, 20);
-        private static Rect mode1Button = new Rect(25, -1, 25, 20);
-        private static Rect mode2Button = new Rect(40, -1, 25, 20);
         private void onAllGUI(int windowId)
         {
             //Minimize button
@@ -117,7 +123,7 @@ namespace TimeControl
 
             if (true)
             {
-                //display appropriate things
+                GUILayout.Label("WHOA, THERES STUFF IN HERE!");
             }
 
             if (Event.current.button > 0 && Event.current.type != EventType.Repaint && Event.current.type != EventType.Layout) //Ignore right & middle clicks
