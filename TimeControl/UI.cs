@@ -51,12 +51,12 @@ namespace TimeControl
             {
                 if (HighLogic.LoadedScene == GameScenes.TRACKSTATION || HighLogic.LoadedScene == GameScenes.SPACECENTER)
                 {
-                    menuWindowPosition = constrainToScreen(GUILayout.Window("Time Control".GetHashCode(), menuWindowPosition, onUtilGUI, "Time Control"));
+                    menuWindowPosition = constrainToScreen(GUILayout.Window("Time Control".GetHashCode(), menuWindowPosition, onMenuGUI, "Time Control"));
                 }
 
                 if (HighLogic.LoadedSceneIsFlight)
                 {
-                    flightWindowPosition = constrainToScreen(GUILayout.Window("Time Control".GetHashCode() + 1, flightWindowPosition, onUtilGUI, "Time Control"));
+                    flightWindowPosition = constrainToScreen(GUILayout.Window("Time Control".GetHashCode() + 1, flightWindowPosition, onFlightGUI, "Time Control"));
 
                     if (settingsOpen)
                     {
@@ -68,7 +68,7 @@ namespace TimeControl
             GUI.skin = HighLogic.Skin;//use KSP skin - prevents bugs with other mods that might not bother to set skin
         }
 
-        private void onUtilGUI(int windowId)
+        private void onFlightGUI(int windowId)
         {
             //Minimize button
             if (GUI.Button(closeButton, ""))
@@ -124,6 +124,44 @@ namespace TimeControl
             if (true)
             {
                 GUILayout.Label("WHOA, THERES STUFF IN HERE!");
+            }
+
+            if (Event.current.button > 0 && Event.current.type != EventType.Repaint && Event.current.type != EventType.Layout) //Ignore right & middle clicks
+                Event.current.Use();
+
+            GUI.DragWindow();
+        }
+
+        private void onMenuGUI(int windowId)
+        {
+            //Minimize button
+            if (GUI.Button(closeButton, ""))
+            {
+                visible = !visible; //ALSO TOOLBAR SUPPORT STUFF
+            }
+
+            Color bc = GUI.backgroundColor;
+            Color cc = GUI.contentColor;
+            GUI.backgroundColor = Color.clear;
+            //Settings button
+            if (!settingsOpen)
+            {
+                GUI.contentColor = new Color(0.5f, 0.5f, 0.5f);
+            }
+            if (GUI.Button(settingsButton, "?"))
+            {
+                settingsOpen = !settingsOpen;
+            }
+            GUI.contentColor = new Color(0.5f, 0.5f, 0.5f);
+            GUI.Button(mode0Button, "S");
+            GUI.Button(mode1Button, "H");
+            GUI.contentColor = cc;
+            GUI.Button(mode2Button, "R");
+            GUI.backgroundColor = bc;
+
+            if (true)
+            {
+                GUILayout.Label("WHOA, THERES DIFFERENT STUFF IN HERE!");
             }
 
             if (Event.current.button > 0 && Event.current.type != EventType.Repaint && Event.current.type != EventType.Layout) //Ignore right & middle clicks
